@@ -1,0 +1,1 @@
+# aws-ai-semantic-detection-app-starter
