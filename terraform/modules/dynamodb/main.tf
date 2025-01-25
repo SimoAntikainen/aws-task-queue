@@ -1,0 +1,71 @@
+resource "aws_dynamodb_table" "process_state_table" {
+  name         = "ProcessStateTable"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  range_key    = "taskId"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "taskId"
+    type = "S"
+  }
+
+  // https://stackoverflow.com/questions/40561484/what-data-type-should-be-used-for-timestamp-in-dynamodb
+  ttl {
+    attribute_name = "expireAt" # Enable TTL on this attribute (eg. one day-> after completedAt)
+    enabled        = true
+  }
+
+  /* defining other attributes here for documentation
+
+  attribute {
+    name = "completed"
+    type = "S" # String (processing | completed)
+  }
+
+  attribute {
+    name = "createdDate"
+    type = "S" # String (ISO 8601 timestamps like "2023-01-25T12:00:00Z")
+  }
+
+  attribute {
+    name = "completedDate"
+    type = "S" # String (ISO 8601 timestamps like "2023-01-25T12:00:00Z")
+  }
+
+  attribute {
+    name = "expireAt"
+    type = "N" # TTL attribute (UNIX epoch time)
+  }
+
+  attribute {
+    name = "image_s3_link"
+    type = "S" # String (URL format)
+  }
+
+  attribute {
+    name = "results_s3_link"
+    type = "S" # String (URL format)
+  }
+  */
+
+  tags = var.tags  
+}
+
+
+resource "aws_dynamodb_table" "user_table" {
+  name           = "UserTable"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "userId"
+
+  attribute {
+    name = "userId"
+    type = "S" 
+  }
+
+  tags = var.tags  
+}

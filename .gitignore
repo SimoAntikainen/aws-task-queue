@@ -1,3 +1,32 @@
+devenv/
+
+# Terraform State Files
+*.tfstate
+*.tfstate.*
+
+# Crash Logs
+crash.log
+
+# Terraform Variable Files
+*.tfvars
+*.tfvars.json
+
+# Terraform Lock File
+.terraform.lock.hcl
+
+# Local Terraform Configuration Directory
+.terraform/
+
+# Sensitive Files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Plan Output Files
+*.tfplan
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
