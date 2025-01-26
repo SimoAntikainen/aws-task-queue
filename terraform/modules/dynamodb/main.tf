@@ -14,6 +14,18 @@ resource "aws_dynamodb_table" "process_state_table" {
     type = "S"
   }
 
+  attribute {
+    name = "batchId"
+    type = "S" # To uniquely identify the batch of created tasks
+  }
+
+  global_secondary_index {
+    name            = "batchIdIndex"
+    hash_key        = "batchId"
+    range_key       = "taskId"
+    projection_type = "ALL"
+  }
+
   // https://stackoverflow.com/questions/40561484/what-data-type-should-be-used-for-timestamp-in-dynamodb
   ttl {
     attribute_name = "expireAt" # Enable TTL on this attribute (eg. one day-> after completedAt)
@@ -23,7 +35,7 @@ resource "aws_dynamodb_table" "process_state_table" {
   /* defining other attributes here for documentation
 
   attribute {
-    name = "completed"
+    name = "status"
     type = "S" # String (processing | completed)
   }
 
@@ -43,7 +55,7 @@ resource "aws_dynamodb_table" "process_state_table" {
   }
 
   attribute {
-    name = "image_s3_link"
+    name = "file_s3_link"
     type = "S" # String (URL format)
   }
 
