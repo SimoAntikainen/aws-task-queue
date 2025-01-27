@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 import boto3
 from botocore.exceptions import ClientError
 
-def create_task_in_dynamodb(bucket_name: str, user_id: str, task_id: str, batch_id: str, created_date: str, object_key: str, expire_seconds: 3600):
+def create_task_in_dynamodb(bucket_name: str, user_id: str, task_id: str, batch_id: str, task_type: str,
+                             created_date: str, object_key: str, expire_seconds: 3600):
     """
     Create a task entry in DynamoDB.
     """
@@ -24,6 +25,7 @@ def create_task_in_dynamodb(bucket_name: str, user_id: str, task_id: str, batch_
                 "userId": user_id,
                 "taskId": task_id,
                 "batchId" : batch_id,
+                "taskType" : task_type,
                 "createdDate": created_date,
                 "status": "processing",  # Initial status
                 "file_s3_link": f"s3://{bucket_name}/{object_key}",
