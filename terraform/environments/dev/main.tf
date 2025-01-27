@@ -28,3 +28,11 @@ module "s3" {
     Project     = var.project
   }
 }
+
+module "lambda" {
+  source      = "../../modules/lambda"
+  tags = {
+    Environment = var.environment
+    Project     = var.project
+  }
+}

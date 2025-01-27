@@ -35,6 +35,11 @@ resource "aws_dynamodb_table" "process_state_table" {
   /* defining other attributes here for documentation
 
   attribute {
+    name = "taskType"
+    type = "S" # type of the task, which defines workflow after file is uploaded to s3
+  }
+
+  attribute {
     name = "status"
     type = "S" # String (processing | completed)
   }
