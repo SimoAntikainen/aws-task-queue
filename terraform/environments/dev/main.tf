@@ -37,6 +37,8 @@ module "lambda" {
   account_id = data.aws_caller_identity.current.account_id
   s3_bucket_arn = module.s3.bucket_arn
   s3_bucket_name =  module.s3.bucket_name
+  environment =  var.environment
+  project = var.project
   tags = {
     Environment = var.environment
     Project     = var.project

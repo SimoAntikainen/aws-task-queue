@@ -23,3 +23,15 @@ variable "s3_bucket_arn" {
   description = "ARN of the S3 bucket that will trigger this Lambda function on eg. on upload"
   type        = string
 }
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "Development"
+}
+
+variable "project" {
+  description = "Project name"
+  type        = string
+  default     = "AIDetectionApp"
+}

@@ -93,7 +93,7 @@ resource "aws_s3_bucket_notification" "notify_lambda" {
   lambda_function {
     lambda_function_arn = aws_lambda_function.s3_upload_completed_lambda.arn
     events              = ["s3:ObjectCreated:*"]
-    filter_prefix = "AIDetectionApp/Development/account/upload/"
+    filter_prefix = "${var.project}/${var.environment}/upload/"
     # filter_suffix = ".jpg"
   }
 

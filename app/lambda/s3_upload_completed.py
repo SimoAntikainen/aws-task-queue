@@ -32,10 +32,8 @@ def handler(event, context):
 
             # Extract userId and taskId from the object key
             key_parts = object_key.split("/")
-            
-            app_name, environment, _, resource_type, task_type, user_id, task_id, filename = key_parts
 
-
+            app_name, environment, resource_type, _, user_id, task_type, task_id, filename = key_parts
 
             # Query and update the DynamoDB table
             response = table.update_item(

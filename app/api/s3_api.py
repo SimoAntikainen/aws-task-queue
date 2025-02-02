@@ -16,10 +16,11 @@ def generate_object_key(app_name:str, environment:str, user_id:str, task_id:str,
     :param task_id: Unique task identifier
     :param task_type: Type of the task, which defines workflow after file is uploaded to s3
     :param filename: Name of the file uploaded to s3
-    :param resource_type:  Type or purpose of the resource (e.g., upload, processed, results, logs)
+    :param resource_type:  Type or purpose of the resource (e.g., upload, intermediate_result, results, logs)
     """
 
-    key = f"{app_name}/{environment}/account/{resource_type}/{task_type}/{user_id}/{task_id}/{filename}"
+    key = f"{app_name}/{environment}/{resource_type}/account/{user_id}/{task_type}/{task_id}/{filename}"
+
     return key
 
 
