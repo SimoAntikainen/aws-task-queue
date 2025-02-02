@@ -6,7 +6,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
 
-def generate_object_key(app_name:str, environment:str, user_id:str, task_id:str, filename:str, task_type: str, resource_type="upload"):
+def generate_object_key(app_name:str, environment:str, user_id:str, task_id:str,  task_type: str, filename:str, resource_type="upload"):
     """
     Generate a unique key using the provided parameters.
 
@@ -19,7 +19,7 @@ def generate_object_key(app_name:str, environment:str, user_id:str, task_id:str,
     :param resource_type:  Type or purpose of the resource (e.g., upload, processed, results, logs)
     """
 
-    key = f"{app_name}/{environment}/account/{user_id}/{task_id}/{task_type}/{resource_type}/{filename}"
+    key = f"{app_name}/{environment}/account/{resource_type}/{task_type}/{user_id}/{task_id}/{filename}"
     return key
 
 

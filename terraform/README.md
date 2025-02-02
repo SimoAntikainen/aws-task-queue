@@ -19,9 +19,11 @@ terraform plan
 terraform apply
 ```
 
-
 terraform apply -target=module.dynamodb
 terraform destroy -target=module.dynamodb
+
+if you modify the `app/api/lambda` remember to zip them
+
 
 
 

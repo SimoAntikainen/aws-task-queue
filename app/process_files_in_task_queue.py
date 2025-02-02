@@ -1,5 +1,6 @@
 import os
 import uuid
+import time
 from datetime import datetime
 from api.dynamodb_api import create_task_in_dynamodb, fetch_tasks_from_dynamodb,  fetch_tasks_by_batch_from_dynamodb
 from api.s3_api import generate_object_key, generate_presigned_url, upload_file_to_s3, upload_file_with_presigned_url
@@ -70,17 +71,13 @@ if __name__ == "__main__":
 
 
         
+    time.sleep(10)
 
-
-
-    
-
-
-    #tasks = fetch_tasks_by_batch_from_dynamodb(batch_id)
-    #if tasks:
-    #    print("Fetched Batch of Tasks:")
-    #    for task in tasks:
-    #        print(task)
+    tasks = fetch_tasks_by_batch_from_dynamodb(batch_id)
+    if tasks:
+        print("Fetched Batch of Tasks:")
+        for task in tasks:
+            print(task)
     
 
 
