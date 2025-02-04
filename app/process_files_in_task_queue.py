@@ -37,11 +37,11 @@ if __name__ == "__main__":
 
     files = [{
         'file_path' : 'app/example_data/moby_dick.txt',
-        'task_type' : 'translate'
+        'task_type' : 'summarize'
     },
     {
         'file_path' : 'app/example_data/file with special characters @#!.txt',
-        'task_type' : 'translate'
+        'task_type' : 'summarize'
     }
     ]
 

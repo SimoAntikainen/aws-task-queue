@@ -3,6 +3,12 @@ import boto3
 from urllib.parse import unquote
 from botocore.exceptions import ClientError
 
+
+
+
+
+
+
 def handler(event, context):
     """
     AWS Lambda function triggered by an S3 event to update the status
@@ -14,6 +20,7 @@ def handler(event, context):
     # Initialize DynamoDB resource
     dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table("ProcessStateTable")  # Ensure this matches your table name
+    lambda_client = boto3.client("lambda")
 
     try:
         # Loop through S3 event records
@@ -52,6 +59,27 @@ def handler(event, context):
             )
 
             print(f"Updated status for task {task_id}: {response['Attributes']}")
+
+
+            payload = {
+                    "bucket": bucket_name,
+                    "object_key": object_key,
+                    "app_name": app_name,
+                    "environment": environment,
+                    "user_id": user_id,
+                    "task_id": task_id,
+                    "filename": filename
+            }
+
+            if task_type == 'summarize':
+                print(payload)
+                #summary_response = lambda_client.invoke(
+                #    FunctionName="SummarizeTextLambda",  # Replace with your function name
+                #    InvocationType="RequestResponse",
+                #    Payload=json.dumps(payload)
+                #)
+
+            
 
     except KeyError as e:
         print(f"KeyError: {e}. Event: {json.dumps(event)}")
