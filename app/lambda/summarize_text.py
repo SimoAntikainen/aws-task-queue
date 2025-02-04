@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 
@@ -67,7 +68,9 @@ def handler(event, context):
     }
     """
     s3_client = boto3.client("s3")
-    
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.Table("ProcessStateTable")
+
     try:
         bucket = event.get("bucket")
         object_key = event.get("object_key")
@@ -81,11 +84,46 @@ def handler(event, context):
         summary = summarize_text_with_claude(text)
         print("Summary:", summary)
 
+        key_parts = object_key.split("/")
+        if len(key_parts) != 8:
+            raise ValueError("Unexpected object key format.")
+        
+        app_name, environment, resource_type, _, user_id, task_type, task_id, filename = key_parts
+        # parsing this from object key might not be safe, prefer explicit payload parameters
+        results_key = f"{app_name}/{environment}/results/account/{user_id}/summarize/{task_id}/{filename}"
+        s3_client.put_object(Bucket=bucket, Key=results_key, Body=summary)
+
+        print(f"Uploaded summary to s3://{bucket}/{results_key}")
+        s3_link = f"s3://{bucket}/{results_key}"
+        completed_date = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Update the ProcessStateTable in DynamoDB.
+        table.update_item(
+            Key={
+                "userId": user_id,
+                "taskId": task_id
+            },
+            UpdateExpression="SET #s = :completed, results_s3_link = :link, completedDate = :date",
+            ExpressionAttributeNames={
+                "#s": "status"
+            },
+            ExpressionAttributeValues={
+                ":completed": "completed",
+                ":link": s3_link,
+                ":date": completed_date,
+            }
+        )
+
         return {
             "statusCode": 200,
-            "summary": summary
+            "summary": summary,
+            "results_s3_link": s3_link,
+            "completedDate": completed_date
         }
-        
+    
+    except KeyError as e:
+        print(f"KeyError: {e}. Event: {json.dumps(event)}")
+        raise RuntimeError("Invalid S3 event structure.")
     except ClientError as e:
         print("Error accessing resources:", e)
         return {
