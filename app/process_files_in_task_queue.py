@@ -1,9 +1,13 @@
 import os
+from urllib.parse import quote
 import uuid
 import time
 from datetime import datetime
+
+import boto3
 from api.dynamodb_api import create_task_in_dynamodb, fetch_tasks_from_dynamodb,  fetch_tasks_by_batch_from_dynamodb
 from api.s3_api import generate_object_key, generate_presigned_url, upload_file_to_s3, upload_file_with_presigned_url
+
 
 APP_NAME = 'AIDetectionApp'
 ENVIRONMENT = 'Development'
@@ -66,18 +70,30 @@ if __name__ == "__main__":
 
         except RuntimeError as error:
             print(f"Error: {error}")
-
-
-
-
         
-    time.sleep(10)
+    time.sleep(30)
 
     tasks = fetch_tasks_by_batch_from_dynamodb(batch_id)
     if tasks:
         print("Fetched Batch of Tasks:")
         for task in tasks:
             print(task)
+    
+
+
+
+        #time.sleep(3)
+
+        #s3_client = boto3.client("s3")
+        #s3_response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        #text = s3_response["Body"].read().decode("utf-8")
+        #print(f"Retrieved text from s3://{bucket_name}/{object_key}")
+        #print(text)
+
+
+
+
+
     
 
 

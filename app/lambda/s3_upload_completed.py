@@ -1,6 +1,6 @@
 import json
 import boto3
-from urllib.parse import unquote
+from urllib.parse import unquote, unquote_plus
 from botocore.exceptions import ClientError
 
 
@@ -33,18 +33,22 @@ def handler(event, context):
             print(f"raw key: {raw_object_key}")
 
             # Decode URL-encoded object key
-            object_key = unquote(raw_object_key)
+            object_key = unquote_plus(raw_object_key)
             print(f"Processing object: {object_key} in bucket: {bucket_name}")
             
             # debug code
-            s3_response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
-            #text = s3_response["Body"].read().decode("utf-8")
-            print(f"Retrieved text from s3://{bucket_name}/{object_key}")
+            try:
+                s3_response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+                #text = s3_response["Body"].read().decode("utf-8")
+                print(f"Retrieved text from s3://{bucket_name}/{object_key}")
+            except Exception as e:
+                raise RuntimeError("Error fetching key from S3: {e}")
 
             # Extract userId and taskId from the object key
             key_parts = object_key.split("/")
 
             app_name, environment, resource_type, _, user_id, task_type, task_id, filename = key_parts
+            print(f"task_id {task_id}")
 
             # Query and update the DynamoDB table
             response = table.update_item(
@@ -67,7 +71,7 @@ def handler(event, context):
 
             payload = {
                     "bucket": bucket_name,
-                    "object_key": raw_object_key,
+                    "object_key": object_key,
                     "app_name": app_name,
                     "environment": environment,
                     "user_id": user_id,
