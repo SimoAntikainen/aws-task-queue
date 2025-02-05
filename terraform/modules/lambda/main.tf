@@ -151,6 +151,7 @@ resource "aws_lambda_function" "s3_upload_completed_lambda" {
   handler          = "s3_upload_completed.handler"
   runtime          = "python3.12" 
   source_code_hash = filebase64sha256("${path.module}/../../../app/lambda/s3_upload_completed.zip")
+  timeout          = 30 # seconds 
   tags = var.tags 
 }
 
