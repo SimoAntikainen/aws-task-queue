@@ -51,6 +51,7 @@ def summarize_text_with_claude(prompt: str) -> str:
         raise
     
 
+
 def handler(event, context):
     """
     Lambda function to retrieve a text file from S3 using the provided bucket and object key,
@@ -74,6 +75,10 @@ def handler(event, context):
     try:
         bucket = event.get("bucket")
         object_key = event.get("object_key")
+
+        print(f"bucket: {bucket}")
+        print(f"object_key: {object_key}")
+        
         if not bucket or not object_key:
             raise ValueError("Missing bucket or object_key in the event payload.")
 

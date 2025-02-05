@@ -21,21 +21,25 @@ def handler(event, context):
     dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table("ProcessStateTable")  # Ensure this matches your table name
     lambda_client = boto3.client("lambda")
+    s3_client = boto3.client("s3")
 
     try:
         # Loop through S3 event records
         for record in event['Records']:
             # Extract bucket and object key from the event
             bucket_name = record['s3']['bucket']['name']
-            object_key = record['s3']['object']['key']
+            raw_object_key = record['s3']['object']['key']
             
-            print(f"raw key: {object_key}")
+            print(f"raw key: {raw_object_key}")
 
             # Decode URL-encoded object key
-            object_key = unquote(object_key)
-
-
+            object_key = unquote(raw_object_key)
             print(f"Processing object: {object_key} in bucket: {bucket_name}")
+            
+            # debug code
+            s3_response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+            #text = s3_response["Body"].read().decode("utf-8")
+            print(f"Retrieved text from s3://{bucket_name}/{object_key}")
 
             # Extract userId and taskId from the object key
             key_parts = object_key.split("/")
@@ -63,7 +67,7 @@ def handler(event, context):
 
             payload = {
                     "bucket": bucket_name,
-                    "object_key": object_key,
+                    "object_key": raw_object_key,
                     "app_name": app_name,
                     "environment": environment,
                     "user_id": user_id,
@@ -71,13 +75,14 @@ def handler(event, context):
                     "filename": filename
             }
 
+            print(f"payload: {payload}")
+
             if task_type == 'summarize':
-                print(payload)
-                #summary_response = lambda_client.invoke(
-                #    FunctionName="SummarizeTextLambda",  # Replace with your function name
-                #    InvocationType="RequestResponse",
-                #    Payload=json.dumps(payload)
-                #)
+                lambda_client.invoke(
+                    FunctionName="summarize_text",
+                     InvocationType="Event",      
+                    Payload=json.dumps(payload)
+                )
 
             
 

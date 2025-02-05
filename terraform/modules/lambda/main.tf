@@ -57,18 +57,25 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb_policy" {
 
 # Create an IAM policy that allows get and put access on the specified bucket
 resource "aws_iam_policy" "lambda_s3_policy" {
-  name        = "summarize_text_lambda_s3_policy"
-  description = "Policy for Summarize Text Lambda to download and upload objects from S3"
+  name        = "lambda_s3_policy"
+  description = "Policy for Summarize Text etc. Lambda to download and upload objects from S3"
   policy      = jsonencode({
     Version   = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect   : "Allow",
+        Action   : [
+          "s3:ListBucket"  // Allow listing the bucket contents (this was needed)
+        ],
+        Resource : var.s3_bucket_arn  //
+      },
+      {
+        Effect   : "Allow",
+        Action   : [
           "s3:GetObject",
           "s3:PutObject"
-        ]
-        Resource = "${var.s3_bucket_arn}/*"
+        ],
+        Resource : "${var.s3_bucket_arn}/*"  
       }
     ]
   })
@@ -79,6 +86,8 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_policy_attach" {
   policy_arn = aws_iam_policy.lambda_s3_policy.arn
 }
 
+
+// the resource arn here is not specified exactly, beware of lax permissions
 resource "aws_iam_policy" "bedrock_invoke_policy" {
   name        = "bedrock_invoke_policy"
   description = "Policy to allow Lambda to call Bedrock InvokeModel"
@@ -102,7 +111,25 @@ resource "aws_iam_role_policy_attachment" "bedrock_invoke_policy_attach" {
   policy_arn = aws_iam_policy.bedrock_invoke_policy.arn
 }
 
+resource "aws_iam_policy" "lambda_invoke_policy" {
+  name        = "lambda-invoke-policy"
+  description = "Policy to allow Lambda functions to invoke other Lambda functions"
+  policy      = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "lambda:InvokeFunction",
+        Resource = "*"  # You can scope this down to specific function ARNs if needed.
+      }
+    ]
+  })
+}
 
+resource "aws_iam_role_policy_attachment" "lambda_invoke_policy_attach" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_invoke_policy.arn
+}
 
 
 
@@ -112,7 +139,7 @@ resource "aws_lambda_function" "my_lambda" {
   function_name    = "my_lambda_function"
   role             = aws_iam_role.lambda_role.arn
   handler          = "lambda_function.handler"
-  runtime          = "python3.12" # Change based on your runtime
+  runtime          = "python3.12" 
   source_code_hash = filebase64sha256("${path.module}/../../../app/lambda/lambda_function.zip")
   tags = var.tags 
 }
@@ -122,7 +149,7 @@ resource "aws_lambda_function" "s3_upload_completed_lambda" {
   function_name    = "s3_upload_completed"
   role             = aws_iam_role.lambda_role.arn
   handler          = "s3_upload_completed.handler"
-  runtime          = "python3.12" # Change based on your runtime
+  runtime          = "python3.12" 
   source_code_hash = filebase64sha256("${path.module}/../../../app/lambda/s3_upload_completed.zip")
   tags = var.tags 
 }
@@ -132,7 +159,7 @@ resource "aws_lambda_function" "summarize_text_lambda" {
   function_name    = "summarize_text"
   role             = aws_iam_role.lambda_role.arn
   handler          = "summarize_text.handler"
-  runtime          = "python3.12" # Change based on your runtime
+  runtime          = "python3.12" 
   source_code_hash = filebase64sha256("${path.module}/../../../app/lambda/summarize_text.zip")
   timeout          = 30 # seconds 
   tags = var.tags 
