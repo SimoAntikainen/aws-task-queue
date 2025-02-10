@@ -4,13 +4,12 @@ import uuid
 import time
 from datetime import datetime
 
-import boto3
 from api.dynamodb_api import create_task_in_dynamodb, fetch_tasks_from_dynamodb,  fetch_tasks_by_batch_from_dynamodb
 from api.s3_api import generate_object_key, generate_presigned_url, upload_file_to_s3, upload_file_with_presigned_url
+from api.sqs_api import fetch_messages_by_batch_from_sqs
 
-
-APP_NAME = 'AIDetectionApp'
-ENVIRONMENT = 'Development'
+APP_NAME = os.environ["AIDetectionApp"] 
+ENVIRONMENT = os.environ["Development"]  
 
 def generate_batch_id():
     """
@@ -25,6 +24,8 @@ def generate_task_id_with_timestamp():
     timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     id = timestamp + '_' +str(uuid.uuid4())
     return id, timestamp
+
+
 
 
     
@@ -73,11 +74,27 @@ if __name__ == "__main__":
         
     time.sleep(30)
 
+    print(f"\n🟢 Fetching Batch Task State for batchId {batch_id}...")
     tasks = fetch_tasks_by_batch_from_dynamodb(batch_id)
     if tasks:
         print("Fetched Batch of Tasks:")
         for task in tasks:
             print(task)
+
+
+    # Fetch messages from SQS by batchId
+    print(f"\n🟢 Fetching Completed Task Messages from SQS for batchId {batch_id}...")
+    sqs_messages = fetch_messages_by_batch_from_sqs(batch_id, wait_time=10)
+
+    if sqs_messages:
+        print("\n✅ Completed Task Messages from SQS:")
+        for msg in sqs_messages:
+            print(msg)
+    else:
+        print("\n⚠️ No messages found in SQS for batchId:", batch_id)
+
+
+
     
 
 

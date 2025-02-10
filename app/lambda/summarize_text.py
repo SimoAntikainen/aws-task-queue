@@ -1,7 +1,21 @@
+import os
 import json
 from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
+
+
+s3_client = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
+sqs_client = boto3.client("sqs", region_name="eu-west-1")
+
+# Load SQS queue URL from environment variable (set in Terraform)
+SQS_QUEUE_URL = os.environ["SQS_QUEUE_URL"]
+
+
+# Define table reference
+table = dynamodb.Table("ProcessStateTable")
+
 
 def summarize_text_with_claude(prompt: str) -> str:
     """
@@ -13,7 +27,6 @@ def summarize_text_with_claude(prompt: str) -> str:
 
     client = boto3.client("bedrock-runtime")
 
-
     prompt = "summarize the following text ... \n" + prompt
 
     # get the correct modelId for eu-west-1 region
@@ -22,40 +35,43 @@ def summarize_text_with_claude(prompt: str) -> str:
         "modelId": "eu.anthropic.claude-3-5-sonnet-20240620-v1:0",
         "contentType": "application/json",
         "accept": "application/json",
-        "body": json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 1000,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", 
-                         "text": prompt},
-                    ],
-                }
-            ],
-        }),
+        "body": json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 1000,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                        ],
+                    }
+                ],
+            }
+        ),
     }
 
     try:
         response = client.invoke_model(**kwargs)
-
         response_body = response["body"].read()
         result = json.loads(response_body)
-        summary = result.get("content", "")[0]['text']
+        summary = result.get("content", "")[0]["text"]
 
         return summary
 
     except Exception as e:
         print("Error calling Claude via Bedrock:", e)
         raise
-    
 
 
 def handler(event, context):
     """
-    Lambda function to retrieve a text file from S3 using the provided bucket and object key,
-    summarize the text using Anthropic's Claude model via Amazon Bedrock, and return the summary.
+    Lambda function to:
+    1. Retrieve a text file from S3.
+    2. Summarize the text using Bedrock Claude.
+    3. Store the summary in S3.
+    4. Update task status in DynamoDB.
+    5. Fetch batchId from DynamoDB and send a message to SQS.
 
     Expected event payload:
     {
@@ -68,8 +84,8 @@ def handler(event, context):
         "filename": "..."           # optional additional info
     }
     """
-    s3_client = boto3.client("s3")
-    dynamodb = boto3.resource("dynamodb")
+    # s3_client = boto3.client("s3")
+    # dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table("ProcessStateTable")
 
     try:
@@ -78,7 +94,7 @@ def handler(event, context):
 
         print(f"bucket: {bucket}")
         print(f"object_key: {object_key}")
-        
+
         if not bucket or not object_key:
             raise ValueError("Missing bucket or object_key in the event payload.")
 
@@ -92,8 +108,17 @@ def handler(event, context):
         key_parts = object_key.split("/")
         if len(key_parts) != 8:
             raise ValueError("Unexpected object key format.")
-        
-        app_name, environment, resource_type, _, user_id, task_type, task_id, filename = key_parts
+
+        (
+            app_name,
+            environment,
+            resource_type,
+            _,
+            user_id,
+            task_type,
+            task_id,
+            filename,
+        ) = key_parts
         # parsing this from object key might not be safe, prefer explicit payload parameters
         results_key = f"{app_name}/{environment}/results/account/{user_id}/summarize/{task_id}/{filename}"
         s3_client.put_object(Bucket=bucket, Key=results_key, Body=summary)
@@ -102,42 +127,54 @@ def handler(event, context):
         s3_link = f"s3://{bucket}/{results_key}"
         completed_date = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
+        # Fetch batchId from DynamoDB
+        dynamo_response = table.get_item(Key={"userId": user_id, "taskId": task_id})
+        if "Item" not in dynamo_response:
+            raise ValueError("Task record not found in DynamoDB.")
+
+        batch_id = dynamo_response["Item"].get("batchId", "unknown")
+
         # Update the ProcessStateTable in DynamoDB.
         table.update_item(
-            Key={
-                "userId": user_id,
-                "taskId": task_id
-            },
+            Key={"userId": user_id, "taskId": task_id},
             UpdateExpression="SET #s = :completed, results_s3_link = :link, completedDate = :date",
-            ExpressionAttributeNames={
-                "#s": "status"
-            },
+            ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={
                 ":completed": "completed",
                 ":link": s3_link,
                 ":date": completed_date,
-            }
+            },
+        )
+
+        sqs_message = {
+            "batchId": batch_id,
+            "taskId": task_id,
+            "userId": user_id,
+            "results_s3_link": s3_link,
+        }
+
+        sqs_client.send_message(
+            QueueUrl=SQS_QUEUE_URL,
+            MessageBody=json.dumps(sqs_message),
+            MessageAttributes={
+                "batchId": {"StringValue": batch_id, "DataType": "String"}
+            },
+            MessageGroupId=batch_id,
         )
 
         return {
             "statusCode": 200,
             "summary": summary,
             "results_s3_link": s3_link,
-            "completedDate": completed_date
+            "completedDate": completed_date,
         }
-    
+
     except KeyError as e:
         print(f"KeyError: {e}. Event: {json.dumps(event)}")
         raise RuntimeError("Invalid S3 event structure.")
     except ClientError as e:
         print("Error accessing resources:", e)
-        return {
-            "statusCode": 500,
-            "error": f"Error accessing resources {e}"
-        }
+        return {"statusCode": 500, "error": f"Error accessing resources {e}"}
     except Exception as e:
         print("Unexpected error:", e)
-        return {
-            "statusCode": 500,
-            "error": str(e)
-        }
+        return {"statusCode": 500, "error": str(e)}

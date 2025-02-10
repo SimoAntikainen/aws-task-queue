@@ -3,11 +3,10 @@ import boto3
 from urllib.parse import unquote, unquote_plus
 from botocore.exceptions import ClientError
 
-
-
-
-
-
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("ProcessStateTable")  # Ensure this matches your table name
+lambda_client = boto3.client("lambda")
+s3_client = boto3.client("s3")
 
 def handler(event, context):
     """
@@ -17,11 +16,7 @@ def handler(event, context):
     :param event: Event data from S3 trigger
     :param context: AWS Lambda context object
     """
-    # Initialize DynamoDB resource
-    dynamodb = boto3.resource("dynamodb")
-    table = dynamodb.Table("ProcessStateTable")  # Ensure this matches your table name
-    lambda_client = boto3.client("lambda")
-    s3_client = boto3.client("s3")
+
 
     try:
         # Loop through S3 event records
