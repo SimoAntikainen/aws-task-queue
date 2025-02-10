@@ -24,6 +24,17 @@ variable "s3_bucket_arn" {
   type        = string
 }
 
+variable "sqs_results_queue_arn" {
+  description = "The name of the SQS queue that lambda calls"
+  type        = string
+
+}
+variable "sqs_results_queue_url" {
+  description = "ARN of the SQS queue that lambda calls" 
+  type        = string
+
+}
+
 variable "environment" {
   description = "Environment name"
   type        = string

@@ -132,6 +132,28 @@ resource "aws_iam_role_policy_attachment" "lambda_invoke_policy_attach" {
 }
 
 
+resource "aws_iam_policy" "lambda_sqs_policy" {
+  name        = "lambda-sqs-policy"
+  description = "Policy to allow Lambda to send messages to SQS"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "sqs:SendMessage",
+        Resource = var.sqs_results_queue_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attach" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_sqs_policy.arn
+}
+
+
 
 
 resource "aws_lambda_function" "my_lambda" {
@@ -164,6 +186,11 @@ resource "aws_lambda_function" "summarize_text_lambda" {
   source_code_hash = filebase64sha256("${path.module}/../../../app/lambda/summarize_text.zip")
   timeout          = 30 # seconds 
   tags = var.tags 
+  environment {
+    variables = {
+      SQS_QUEUE_URL = var.sqs_results_queue_url
+    }
+  }
 }
 
 ## permissions for s3_upload_completed_lambda
