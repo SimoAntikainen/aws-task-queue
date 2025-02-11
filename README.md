@@ -1,6 +1,13 @@
 # AWS Task Queue Boilerplate
 
+This project provides a boilerplate setup for a serverless task queue in AWS, including both code and Terraform configurations. It enables:
 
+* **File Upload & Processing**: Upload files to an S3 bucket for automated processing.
+* **Serverless Compute**: Process files using AWS Lambda functions.
+* **Task State Management**: Track task progress in DynamoDB.
+* **Result Storage & Messaging**: Output processed results to S3 and notify via SQS.
+
+![Alt text](res/aws-task-queue.drawio.png)
 
 ## Setting up and running the project
 
