@@ -5,7 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from api.dynamodb_api import create_task_in_dynamodb,  fetch_tasks_by_batch_from_dynamodb
-from api.s3_api import generate_object_key, generate_presigned_url, upload_file_with_presigned_url
+from api.s3_api import download_file_from_s3_url, generate_object_key, generate_presigned_url, upload_file_with_presigned_url
 from api.sqs_api import fetch_messages_by_batch_from_sqs
 
 load_dotenv()
@@ -91,6 +91,7 @@ if __name__ == "__main__":
 
     print(f"\n🟢 Polling for Task completion messages from SQS by batchId {batch_id}...")
 
+    s3_result_links = []
     while task_ids:
         print(f"🔄 Polling SQS... Waiting for {len(task_ids)} remaining tasks.")
     
@@ -100,6 +101,7 @@ if __name__ == "__main__":
             print("\n✅ Completed Task Messages from SQS:")
             for msg in sqs_messages:
                 task_id = msg['taskId']
+                s3_result_links.append(msg['results_s3_link'])
                 print(msg)
                 if task_id in task_ids:
                     task_ids.remove(task_id)
@@ -108,6 +110,10 @@ if __name__ == "__main__":
 
         # Small delay before the next poll to avoid excessive requests
         time.sleep(5)
+
+    download_path = CURRENT_DIR + '/results'
+    for link in s3_result_links:
+        download_file_from_s3_url(link, download_path)
 
 
 
