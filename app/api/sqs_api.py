@@ -1,10 +1,13 @@
 import os
 import boto3
 import json
+from dotenv import load_dotenv
 
-sqs_client = boto3.client("sqs", region_name="eu-west-1")
+load_dotenv()
 
 SQS_QUEUE_URL = os.environ["SQS_QUEUE_URL"]
+REGION_NAME= os.environ["REGION_NAME"]
+sqs_client = boto3.client("sqs", region_name=REGION_NAME)
 
 def fetch_messages_by_batch_from_sqs(batch_id, max_messages=10, wait_time=10):
     """

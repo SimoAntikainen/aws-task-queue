@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 import boto3
 from botocore.exceptions import ClientError
 
+dynamodb = boto3.resource("dynamodb")
+
 def create_task_in_dynamodb(bucket_name: str, user_id: str, task_id: str, batch_id: str, task_type: str,
                              created_date: str, object_key: str, expire_seconds: 3600):
     """
     Create a task entry in DynamoDB.
     """
-    dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table("ProcessStateTable") 
 
     # Set expiration time
@@ -48,7 +49,6 @@ def fetch_tasks_from_dynamodb(user_id, task_id=None):
     :param task_id: (Optional) The taskId to filter tasks by.
     :return: A list of tasks matching the filters.
     """
-    dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table("ProcessStateTable") 
 
     try:
@@ -83,7 +83,6 @@ def fetch_tasks_by_batch_from_dynamodb(batch_id):
     :param batch_id: The batchId to filter tasks by.
     :return: A list of tasks matching the filters.
     """
-    dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table("ProcessStateTable") 
 
     try:

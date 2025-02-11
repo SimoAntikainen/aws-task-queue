@@ -5,6 +5,7 @@ import requests
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
+s3_client = boto3.client("s3")
 
 def generate_object_key(app_name:str, environment:str, user_id:str, task_id:str,  task_type: str, filename:str, resource_type="upload"):
     """
@@ -35,8 +36,6 @@ def generate_presigned_url(bucket_name, object_key, expiration=3600, operation="
     :return: Pre-signed URL as a string
     """
     try:
-        s3_client = boto3.client("s3")
-
         url = s3_client.generate_presigned_url(
             ClientMethod=operation,
             Params={"Bucket": bucket_name, "Key": object_key},
@@ -60,7 +59,6 @@ def upload_file_to_s3(bucket_name, object_key, file_path):
     :param object_key: The key for the S3 object.
     :param file_path: Path to the local file to upload.
     """
-    s3_client = boto3.client("s3")
     try:
         # Upload the file
         s3_client.upload_file(file_path, bucket_name, object_key)
