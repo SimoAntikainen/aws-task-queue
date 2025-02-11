@@ -153,19 +153,6 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attach" {
   policy_arn = aws_iam_policy.lambda_sqs_policy.arn
 }
 
-
-
-
-resource "aws_lambda_function" "my_lambda" {
-  filename         = "${path.module}/../../../app/lambda/lambda_function.zip"
-  function_name    = "my_lambda_function"
-  role             = aws_iam_role.lambda_role.arn
-  handler          = "lambda_function.handler"
-  runtime          = "python3.12" 
-  source_code_hash = filebase64sha256("${path.module}/../../../app/lambda/lambda_function.zip")
-  tags = var.tags 
-}
-
 resource "aws_lambda_function" "s3_upload_completed_lambda" {
   filename         = "${path.module}/../../../app/lambda/s3_upload_completed.zip"
   function_name    = "s3_upload_completed"
