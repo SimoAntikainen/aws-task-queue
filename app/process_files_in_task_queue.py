@@ -1,12 +1,11 @@
 import os
-from urllib.parse import quote
 import uuid
 import time
 from datetime import datetime
 from dotenv import load_dotenv
 
-from api.dynamodb_api import create_task_in_dynamodb, fetch_tasks_from_dynamodb,  fetch_tasks_by_batch_from_dynamodb
-from api.s3_api import generate_object_key, generate_presigned_url, upload_file_to_s3, upload_file_with_presigned_url
+from api.dynamodb_api import create_task_in_dynamodb,  fetch_tasks_by_batch_from_dynamodb
+from api.s3_api import generate_object_key, generate_presigned_url, upload_file_with_presigned_url
 from api.sqs_api import fetch_messages_by_batch_from_sqs
 
 load_dotenv()

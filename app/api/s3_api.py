@@ -1,6 +1,3 @@
-import uuid
-from datetime import datetime
-from urllib.parse import quote
 import requests
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
