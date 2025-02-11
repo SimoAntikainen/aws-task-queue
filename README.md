@@ -19,10 +19,6 @@ source devenv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Terraform
-https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
-
-
 ### AWS tooling
 
 #### AWS CLI
@@ -37,7 +33,7 @@ sudo ./aws/install
 #### IAM user
 
 https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
-Create AWS user with SSO or long term access key in IAM with access to used AWS resources for terraform.
+Create AWS user with SSO or long term access key in IAM with access to used AWS resources for terraform eg. Admin rights.
 ```
 aws configure sso
 or
@@ -66,6 +62,49 @@ The underlying table gives an idea of the used services and permissions:
 For bedrock You might need to separately request access rights for your account
 https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html
 
+### Terraform
+https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
+
+in `environments/.../terraform.tfvars` change the `s3` bucket `task_bucket_name` to some unique bucket name and set other variables as you please. 
+
+```bash
+region          = "eu-west-1"
+task_bucket_name  = "YOUR_BUCKET_NAME"
+environment     = "Development"
+project         = "YOUR_PROJECT_NAME"
+```
+
+Then navigate to `cd/enviroments/dev` to create the AWS resources
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+### Dev env variables
+
+In `app/.env` set env variables
+
+```bash
+APP_NAME=YOUR_PROJECT_NAME
+ENVIRONMENT=Development
+REGION_NAME="eu-west-1"
+BUCKET_NAME="YOUR_BUCKET_NAME"
+SQS_QUEUE_URL="https://sqs.eu-west-1.amazonaws.com/YOUR-USER-ID/ResultsQueue.fifo"
+```
+
+___
+
+## TODO:s
+
+* Staging / prod env and CI/CD
+* Retry mechanisms for failed tasks
+* Use strong consistency mode to DynamoDB or add retries for updating task state (There is a very small change task is not created fast enough). https://stackoverflow.com/questions/55306845/is-dynamodb-item-available-for-querying-immediately
+
+
+
+## Useful resources
 
 ### VS Code extensions
 
@@ -76,19 +115,7 @@ The following extensions are useful:
 * [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 
 
-## Environment variables
-
-
-___
-
-## TODO:s
-
-* Retry mechanisms for failed tasks
-* Use strong consistency mode to DynamoDB or add retries for updating task state (There is a small change task is not created fast enough). https://stackoverflow.com/questions/55306845/is-dynamodb-item-available-for-querying-immediately
-
-
-
-## Useful resources
+### Tutorials:
 
 https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/python/example_code/
 
